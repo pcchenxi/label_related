@@ -241,12 +241,9 @@ Mat Cloud_Matrix_Loador::reformCloud_cameraview(pcl::PointCloud<pcl::PointXYZ> c
 
     // Mat diff_lab         = Mat(img_raw.rows, img_raw.cols, CV_8UC1,  Scalar(0));
 
-    Mat result_mat      = Mat(4, 4, CV_32FC1, Scalar(0));
-
-    cout << result_mat << endl;
-
     ofstream feature_file;
     string path = file_path + "_features.txt";
+    cout << path << endl;
     feature_file.open (path.c_str());
     for(size_t i = 0; i < cloud_base.points.size(); i++)
     {
@@ -320,15 +317,14 @@ Mat Cloud_Matrix_Loador::reformCloud_cameraview(pcl::PointCloud<pcl::PointXYZ> c
         int goemetric_label = cost;
         int true_lab = (int)(label)/50;
 
-        result_mat.at<float>(true_lab, goemetric_label) = result_mat.at<float>(true_lab, goemetric_label) + 1;
-
         // if(true_lab != goemetric_label )
         //     diff_lab.at<uchar>(uv.y, uv.x) = 50;
     }
 
     feature_file.close();
-    imshow("diff_lab", h_cam_);
-    waitKey(10);
+    cout << "done" << endl;
+    // imshow("diff_lab", h_cam_);
+    // waitKey(10);
 
     // //////////////////////////////////////// writing images /////////////////////////////////////////
     // string file_label   = file_path + "_label.xml";
@@ -369,8 +365,8 @@ Mat Cloud_Matrix_Loador::reformCloud_cameraview(pcl::PointCloud<pcl::PointXYZ> c
     // }
 
 
-    cout << result_mat << endl;
-    cout << result_mat.at<float>(1,1) << " " << result_mat.at<float>(2,2) << " " << result_mat.at<float>(3,3) << endl;
+    // cout << result_mat << endl;
+    // cout << result_mat.at<float>(1,1) << " " << result_mat.at<float>(2,2) << " " << result_mat.at<float>(3,3) << endl;
 
     return l_cam_;
 }

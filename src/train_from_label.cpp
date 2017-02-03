@@ -22,7 +22,7 @@ string output_frame = "base_link_oriented";
 string process_frame = "base_link";
 // string process_frame = "world_corrected";
 
-Mat output_label, true_label;
+Mat output_label;
 string feature_img_path;
 bool img_ready = false;
 double label_time = 0;
@@ -31,6 +31,7 @@ vector<string> files_label;
 vector<string> files_label_vision;
 vector<string> files_feature;
 vector<cv::Mat> h_labeled_imgs;
+vector<cv::Mat> color_img_row;
 int file_index = 2;
 
 void publish(ros::Publisher pub, pcl::PointCloud<pcl::PointXYZ> cloud, int type = 2)
@@ -112,15 +113,16 @@ void callback_cloud(const sensor_msgs::PointCloud2ConstPtr &cloud_in)
 
     // get result in camera img
     Mat label_vision = cv::imread(files_label_vision[file_index], CV_LOAD_IMAGE_GRAYSCALE);
+    Mat true_label = h_labeled_imgs[file_index];
     cout << files_label_vision[file_index] << endl;
     cv::resize(label_vision, label_vision, cv::Size(960, 540));
-    cv::imshow("true_label", label_vision);
+    cv::imshow("true_label", true_label);
     cv::waitKey(10); 
 
     Mat label_camera = cml->reformCloud_cameraview(pcl_cloud, pcl_cloud_camera, cml->cost_map_, true_label, label_vision, files_feature[file_index]);
-    cv::imshow("result", label_camera);
-    cv::waitKey(10);
-
+    // cv::imshow("result", label_camera);
+    // cv::waitKey(10);
+    cout << "done" << endl;
     cout << ros::Time::now() - begin << "  loaded cloud *********************" << endl;
 
     publish(pub_cloud, ground_cloud1_); // publishing colored points with defalt cost function  
@@ -129,52 +131,22 @@ void callback_cloud(const sensor_msgs::PointCloud2ConstPtr &cloud_in)
 
 void image_callback(sensor_msgs::ImageConstPtr image_msg)
 {
-    // double diff = image_msg->header.stamp.toSec() - label_time;
-    // cout << image_msg->header.stamp << " " << diff << endl;
-
-    // if(diff == 0)
-    // {
-    //     output_label = cv_bridge::toCvShare(image_msg, "bgr8")->image;
-    //     img_ready = true;
-    // }
-
-    // cout << "in" << endl;
     Mat new_img = cv_bridge::toCvShare(image_msg, "bgr8")->image;
-
-    // string file_path_color = files_color[file_index];
-    string file_path_label = files_label[file_index];
-
-    // cout << file_path_color << " " << file_path_label << endl;
-
-    // Mat true_color         = cv::imread(file_path_color);
-    true_label             = cv::imread(file_path_label);
-
-    // cv::imshow("matched_label", new_img);
-    // cv::imshow("true_label", true_label);
-    // // cout << file_path_color << endl;
-    // cv::waitKey(10); 
 
     Mat gray_newimg;
     cv::cvtColor(new_img, gray_newimg, cv::COLOR_BGR2GRAY);
     // cv::cvtColor(true_color, gray_label, cv::COLOR_BGR2GRAY);
 
-    for(int i = 1; i< h_labeled_imgs.size(); i++)
+    for(int i = 1; i< color_img_row.size(); i++)
     {
-        Mat diff = abs(gray_newimg - h_labeled_imgs[i]);
+        Mat diff = abs(gray_newimg - color_img_row[i]);
         int diff_pix = countNonZero(diff);
-        // cout << diff_pix << endl;
-        // cv::imshow("matched_label", gray_newimg);
-        // cv::imshow("true_label", h_labeled_imgs[i]);
-        // // cout << file_path_color << endl;
-        // cv::waitKey(10); 
 
         if(diff_pix < 420000)
         {
             cout << image_msg->header.stamp << endl;
-            cout << file_path_label << endl;
-
             cv::imshow("matched_label", gray_newimg);
-            cv::imshow("true_label", h_labeled_imgs[i]);
+            cv::imshow("true_color", color_img_row[i]);
             // cout << file_path_color << endl;
             cv::waitKey(10); 
 
@@ -196,10 +168,6 @@ int main(int argc, char** argv)
     
     private_nh.getParam("stamp", label_time);
     // private_nh.getParam("label_path", label_path);
-
-    // true_label = cv::imread(label_path);
-    // cv::imshow("ground_truth", true_label);
-    // cv::waitKey(10);
 
     double ti = ros::Time::now().toSec();
     cout << label_time << " " << ti << " " << ros::Time::now() <<endl;
@@ -235,11 +203,14 @@ int main(int argc, char** argv)
 
         string vision_path = name_label;
         files_feature.push_back(name_feature + str);
-        files_label_vision.push_back(vision_path + "_vision.png");
+        files_label_vision.push_back(vision_path + "_prediction.png");
 
-        cout << color_path <<  " " << vision_path + "_vision.png" << " " << name_feature + str << endl;
-        Mat true_color = cv::imread(color_path, CV_LOAD_IMAGE_GRAYSCALE);
-        h_labeled_imgs.push_back(true_color);
+        cout << color_path <<  " " << vision_path + "_prediction.png" << " " << name_feature + str << endl;
+        Mat row_color = cv::imread(color_path, CV_LOAD_IMAGE_GRAYSCALE);
+        Mat true_label = cv::imread(label_path, CV_LOAD_IMAGE_GRAYSCALE);
+
+        color_img_row.push_back(row_color);
+        h_labeled_imgs.push_back(true_label);
         //         cv::imshow("true_label", true_color);
         // // cout << file_path_color << endl;
         // cv::waitKey(10); 
