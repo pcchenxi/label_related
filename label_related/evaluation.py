@@ -23,6 +23,10 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.metrics import roc_curve, auc
+from scipy import interp
+
 # names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Gaussian Process",
 #          "Decision Tree", "Random Forest", "Neural Net", "AdaBoost",
 #          "Naive Bayes", "QDA"]
@@ -41,24 +45,24 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 
 names = [
-        "Nearest Neighbors",
+        # "Nearest Neighbors",
         # "Linear SVM", "RBF SVM",
          "Decision Tree", 
-         "Random Forest", 
-         "Neural Net", 
+        #  "Random Forest", 
+        #  "Neural Net", 
         #  "AdaBoost",
-         "Naive Bayes"
+        #  "Naive Bayes"
          ]
 
 classifiers = [
-    KNeighborsClassifier(3),
+    # KNeighborsClassifier(3),
     # SVC(kernel="linear", C=0.025),
     # SVC(gamma=2, C=1),
     DecisionTreeClassifier(max_depth=5),
-    RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
-    MLPClassifier(alpha=1),
-    # # AdaBoostClassifier(),
-    GaussianNB()
+    # RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+    # MLPClassifier(alpha=1),
+    # AdaBoostClassifier(),
+    # GaussianNB()
     ]
 
 
@@ -99,7 +103,7 @@ def voted_prediction(img, row, col, radius, ori_predict):
     return new_predit
 
 
-def get_feature(rosbag_name, x, y, img_lengths, img_uvs, index_start = 1, index_end = 12):
+def get_feature(rosbag_name, x, y, img_lengths, img_uvs, index_start = 2, index_end = 12):
     base_path_geo_result = '/home/xi/workspace/labels/output/' + rosbag_name + '/' + rosbag_name + '_'
     for i in range(index_start, index_end):   
         file_path = base_path_geo_result + str(i) + '_features.txt'
@@ -121,8 +125,23 @@ def get_feature(rosbag_name, x, y, img_lengths, img_uvs, index_start = 1, index_
                     img_lengths[-1] -= 1 
                     continue
 
-                x_new = features_clean[1:6]
-                y_new = int(features_clean[0])
+                # if features_clean[0] == 1 or features_clean[0] == 2:
+                #     features_clean[0] = 1
+
+                h_d = features_clean[2]
+                s   = features_clean[3]
+                r_1 = features_clean[4]
+                r_2 = features_clean[5]
+
+                if h_d > 0.2 or s > 0.4:
+                    features_clean[0] = 3
+
+                x_new = []
+                x_new = features_clean[2:4]
+                x_new.append(features_clean[5])
+                # x_new.append(features_clean[6]) # vision
+
+                y_new = int(features_clean[0]) # true label
 
                 x.append(x_new)
                 y.append(y_new)
@@ -144,21 +163,32 @@ y_test = []
 
 
 ################################ get trainning and test set ############################
+
 img_lengths_train = []
 img_uvs_train = []
 img_lengths_train.append(0)
-# x_train, y_train, img_lengths_train, img_uvs_train = get_feature('hogwarts', x_train, y_train, img_lengths_train, img_uvs_train)
-x_train, y_train, img_lengths_train, img_uvs_train = get_feature('slope', x_train, y_train, img_lengths_train, img_uvs_train)
-x_train, y_train, img_lengths_train, img_uvs_train = get_feature('snow_grass', x_train, y_train, img_lengths_train, img_uvs_train)
+# x_train, y_train, img_lengths_train, img_uvs_train = get_feature('hogwarts', x_train, y_train, img_lengths_train, img_uvs_train, 2, 6)
+# x_train, y_train, img_lengths_train, img_uvs_train = get_feature('slope', x_train, y_train, img_lengths_train, img_uvs_train, 2, 12)
+# x_train, y_train, img_lengths_train, img_uvs_train = get_feature('snow_grass', x_train, y_train, img_lengths_train, img_uvs_train, 2, 6)
+
+x_train, y_train, img_lengths_train, img_uvs_train = get_feature('hogwarts', x_train, y_train, img_lengths_train, img_uvs_train)
+# x_train, y_train, img_lengths_train, img_uvs_train = get_feature('slope', x_train, y_train, img_lengths_train, img_uvs_train)
+# x_train, y_train, img_lengths_train, img_uvs_train = get_feature('snow_grass', x_train, y_train, img_lengths_train, img_uvs_train)
 
 ## testing set
 img_lengths_test = []
 img_uvs_test = []
 img_lengths_test.append(0)
-x_test, y_test, img_lengths_test, img_uvs_test = get_feature('hogwarts', x_test, y_test, img_lengths_test, img_uvs_test)
-# x_test, y_test, img_lengths_test, img_uvs_test = get_feature('slope', x_test, y_test, img_lengths_test, img_uvs_test)
-# x_test, y_test, img_lengths_test, img_uvs_test = get_feature('snow_grass', x_test, y_test, img_lengths_test, img_uvs_test)
+# x_test, y_test, img_lengths_test, img_uvs_test = get_feature('hogwarts', x_test, y_test, img_lengths_test, img_uvs_test, 6, 12)
+# x_test, y_test, img_lengths_test, img_uvs_test = get_feature('slope', x_test, y_test, img_lengths_test, img_uvs_test, 6, 12)
+# x_test, y_test, img_lengths_test, img_uvs_test = get_feature('snow_grass', x_test, y_test, img_lengths_test, img_uvs_test, 6, 12)
 
+# x_test, y_test, img_lengths_test, img_uvs_test = get_feature('hogwarts', x_test, y_test, img_lengths_test, img_uvs_test)
+x_test, y_test, img_lengths_test, img_uvs_test = get_feature('slope', x_test, y_test, img_lengths_test, img_uvs_test)
+x_test, y_test, img_lengths_test, img_uvs_test = get_feature('snow_grass', x_test, y_test, img_lengths_test, img_uvs_test)
+
+
+################################ normolize data set ############################
 
 print len(x_train[0])
 feature_norms = []
@@ -178,12 +208,19 @@ x_test = normolize_data(x_test, feature_norms)
 
 for name, clf in zip(names, classifiers):
     print name
-    clf.fit(x_train, y_train)
-    # # scores = clf.score(x_test, y_test)
-    predict = clf.predict(x_test)
-    print metrics.confusion_matrix(y_test, predict)
-    print metrics.classification_report(y_test, predict)
+    # clf.fit(x_train, y_train)
+    # # # scores = clf.score(x_test, y_test)
+    # predict = clf.predict(x_test)
+    # print metrics.confusion_matrix(y_test, predict)
+    # print metrics.classification_report(y_test, predict)
 
+    # classifier = OneVsRestClassifier(clf)
+    classifier = OneVsRestClassifier(clf)
+    classifier.fit(x_train, y_train)
+    # y_prob = classifier.predict_proba(x_test)
+    # y_labels = classifier.predict(x_test)
+    # print y_prob, y_labels
+    print x_test.ravel()
 
 # y_vote = predict[:]
 # for img_index in range(len(img_lengths_test)-1):
@@ -213,23 +250,23 @@ for name, clf in zip(names, classifiers):
 #         cv2.circle(predict_img, (col, row), int(radius), predict_one_img[i] * 50, -1)
 #         # true_img[row,col] = y_one_img[i] * 50
 #         # predict_img[row,col] = predict_one_img[i] * 50
-#         window_size = 30 + 200/540 * row
-#         new_predit = voted_prediction(predict_img, row, col, window_size, predict_one_img[i])
+#         window_size = 30 + 100/540 * row
+#         new_predit = voted_prediction(predict_img, row, col, 50, predict_one_img[i])
 #         cv2.circle(new_predit_img, (col, row), int(radius), new_predit * 50, -1)
 #         predict_one_img[i] = new_predit
     
 #     y_vote[img_lengths_test[img_index]:img_lengths_test[img_index+1]] = predict_one_img
 
 
-#     cv2.imshow("true", true_img)
-#     cv2.imshow("predict_img", predict_img)
-#     cv2.imshow("voted_img", new_predit_img)
-#     cv2.waitKey(0)
+#     # cv2.imshow("true", true_img)
+#     # cv2.imshow("predict_img", predict_img)
+#     # cv2.imshow("voted_img", new_predit_img)
+#     # cv2.waitKey(0)
 # print 'after voting'
 # print metrics.confusion_matrix(y_test, y_vote)
 # print metrics.classification_report(y_test, y_vote)
-############################################################################
+# ###########################################################################
 
-# print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+# # print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 
