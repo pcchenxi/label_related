@@ -130,7 +130,7 @@ def get_feature(rosbag_name, x, y, img_lengths, img_uvs, type = 'c', index_start
 
     for i in range(index_start, index_end):   
         pick = pickle.load( open( pickle_path + str(i) + '.p', "rb" ) )
-        print pick.shape
+        # print pick.shape
         file_path = base_path_geo_result + str(i) + '_features.txt'
         print file_path
         with open(file_path) as f:
@@ -267,73 +267,10 @@ def draw_single_ROC(fpr_c, tpr_c, roc_auc_c, fpr_v, tpr_v, roc_auc_v, fpr_g, tpr
 
 def draw_ROC(fpr_c, tpr_c, roc_auc_c, fpr_v, tpr_v, roc_auc_v, fpr_g, tpr_g, roc_auc_g):
     # flat terrain
-    plt.figure()
-    plt.plot(fpr_c[0], tpr_c[0],
-            label='Fusion (area = {0:0.2f})'
-                ''.format(roc_auc_c[0]),
-            color='deeppink', linestyle='-', linewidth=4)            
-    plt.plot(fpr_g[0], tpr_g[0],
-            label='Geometry (area = {0:0.2f})'
-                ''.format(roc_auc_g[0]),
-            color='cornflowerblue', linestyle='-', linewidth=4)
-    plt.plot(fpr_v[0], tpr_v[0],
-            label='Vision (area = {0:0.2f})'
-                ''.format(roc_auc_v[0]),
-            color='darkorange', linestyle='-', linewidth=4)    
-    plt.plot([0, 1], [0, 1], 'k--', lw=2)
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Classification result on safe terrain ')
-    plt.legend(loc="lower right")
-    plt.show()
+    draw_single_ROC(fpr_c, tpr_c, roc_auc_c, fpr_v, tpr_v, roc_auc_v, fpr_g, tpr_g, roc_auc_g, 'safe')
+    draw_single_ROC(fpr_c, tpr_c, roc_auc_c, fpr_v, tpr_v, roc_auc_v, fpr_g, tpr_g, roc_auc_g, 'risky')
+    draw_single_ROC(fpr_c, tpr_c, roc_auc_c, fpr_v, tpr_v, roc_auc_v, fpr_g, tpr_g, roc_auc_g, 'osbtacle')
 
-    # risky terrain
-    plt.figure()
-    plt.plot(fpr_c[1], tpr_c[1],
-            label='Fusion (area = {0:0.2f})'
-                ''.format(roc_auc_c[1]),
-            color='deeppink', linestyle='-', linewidth=4)            
-    plt.plot(fpr_g[1], tpr_g[1],
-            label='Geometry (area = {0:0.2f})'
-                ''.format(roc_auc_g[1]),
-            color='cornflowerblue', linestyle='-', linewidth=4)
-    plt.plot(fpr_v[1], tpr_v[1],
-            label='Vision (area = {0:0.2f})'
-                ''.format(roc_auc_v[1]),
-            color='darkorange', linestyle='-', linewidth=4)   
-    plt.plot([0, 1], [0, 1], 'k--', lw=2)
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Classification result on risky terrain ')
-    plt.legend(loc="lower right")
-    plt.show()
-
-    # obstacle terrain
-    plt.figure()
-    plt.plot(fpr_c[2], tpr_c[2],
-            label='Fusion (area = {0:0.2f})'
-                ''.format(roc_auc_c[2]),
-            color='deeppink', linestyle='-', linewidth=4)            
-    plt.plot(fpr_g[2], tpr_g[2],
-            label='Geometry (area = {0:0.2f})'
-                ''.format(roc_auc_g[2]),
-            color='cornflowerblue', linestyle='-', linewidth=4)
-    plt.plot(fpr_v[2], tpr_v[2],
-            label='Vision (area = {0:0.2f})'
-                ''.format(roc_auc_v[2]),
-            color='darkorange', linestyle='-', linewidth=4)   
-    plt.plot([0, 1], [0, 1], 'k--', lw=2)
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Classification result on obstacle ')
-    plt.legend(loc="lower right")
-    plt.show()
 
 
 def draw_result_img(x_test, y_test, x_train, y_train, img_lengths_test, img_uvs_test, type):
@@ -449,9 +386,6 @@ s_2 = 2
 c_2 = 2
 e_2 = 12
 
-# x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c = get_feature(data_5, x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c, 'c', s_1, c_1)
-# x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v = get_feature(data_5, x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v, 'v', s_1, c_1)
-# x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g = get_feature(data_5, x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g, 'g', s_1, c_1)
 
 x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c = get_feature(data_1, x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c, 'c', s_1, c_1)
 x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v = get_feature(data_1, x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v, 'v', s_1, c_1)
@@ -460,18 +394,6 @@ x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g = get_feature(data_1,
 x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c = get_feature(data_2, x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c, 'c', s_1, c_1)
 x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v = get_feature(data_2, x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v, 'v', s_1, c_1)
 x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g = get_feature(data_2, x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g, 'g', s_1, c_1)
-
-# x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c = get_feature(data_4, x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c, 'c', 2, 8)
-# x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v = get_feature(data_4, x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v, 'v', 2, 8)
-# x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g = get_feature(data_4, x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g, 'g', 2, 8)
-
-# x_train_c, y_train_c, img_lengths_train, img_uvs_train = get_feature(data_6, x_train_c, y_train_c, img_lengths_train, img_uvs_train, 'c', s_2, c_2)
-# x_train_v, y_train_v, img_lengths_train, img_uvs_train = get_feature(data_6, x_train_v, y_train_v, img_lengths_train, img_uvs_train, 'v', s_2, c_2)
-# x_train_g, y_train_g, img_lengths_train, img_uvs_train = get_feature(data_6, x_train_g, y_train_g, img_lengths_train, img_uvs_train, 'g', s_2, c_2)
-
-# x_train_c, y_train_c, img_lengths_train, img_uvs_train = get_feature(data_5, x_train_c, y_train_c, img_lengths_train, img_uvs_train, 'c', s_2, c_2)
-# x_train_v, y_train_v, img_lengths_train, img_uvs_train = get_feature(data_5, x_train_v, y_train_v, img_lengths_train, img_uvs_train, 'v', s_2, c_2)
-# x_train_g, y_train_g, img_lengths_train, img_uvs_train = get_feature(data_5, x_train_g, y_train_g, img_lengths_train, img_uvs_train, 'g', s_2, c_2)
 
 
 ## testing set
@@ -485,33 +407,22 @@ img_lengths_test_c.append(0)
 img_lengths_test_g.append(0)
 img_lengths_test_v.append(0)
 
-# x_test, y_test, img_lengths_test, img_uvs_test = get_feature('slope', x_test, y_test, img_lengths_test, img_uvs_test)
-# x_test, y_test, img_lengths_test, img_uvs_test = get_feature('snow_grass', x_test, y_test, img_lengths_test, img_uvs_test)
-
-# x_test_c, y_test_c, img_lengths_test, img_uvs_test = get_feature(data_1, x_test_c, y_test_c, img_lengths_test, img_uvs_test, 'c', c_1, e_1)
-# x_test_v, y_test_v, img_lengths_test, img_uvs_test = get_feature(data_1, x_test_v, y_test_v, img_lengths_test, img_uvs_test, 'v', c_1, e_1)
-# x_test_g, y_test_g, img_lengths_test, img_uvs_test = get_feature(data_1, x_test_g, y_test_g, img_lengths_test, img_uvs_test, 'g', c_1, e_1)
-
-# x_test_c, y_test_c, img_lengths_test, img_uvs_test = get_feature(data_2, x_test_c, y_test_c, img_lengths_test, img_uvs_test, 'c', c_2, e_3)
-# x_test_v, y_test_v, img_lengths_test, img_uvs_test = get_feature(data_2, x_test_v, y_test_v, img_lengths_test, img_uvs_test, 'v', c_2, e_3)
-# x_test_g, y_test_g, img_lengths_test, img_uvs_test = get_feature(data_2, x_test_g, y_test_g, img_lengths_test, img_uvs_test, 'g', c_2, e_3)
-
 
 x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_3, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c')
 x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_3, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
 x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_3, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g')
 
-# x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_4, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c')
-# x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_4, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
-# x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_4, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g')
+x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_4, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c')
+x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_4, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
+x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_4, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g')
 
-# x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_4, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c')
-# x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_4, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
-# x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_4, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g')
+x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_6, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c')
+x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_6, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
+x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_6, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g')
 
-x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_5, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c', c_2, e_2)
-x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_5, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v', c_2, e_2)
-x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_5, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g', c_2, e_2)
+x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_5, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c')
+x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_5, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
+x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_5, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g')
 
 # x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_6, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c', c_2, e_2)
 # x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_6, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v', c_2, e_2)
