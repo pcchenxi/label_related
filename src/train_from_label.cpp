@@ -108,7 +108,7 @@ void callback_cloud(const sensor_msgs::PointCloud2ConstPtr &cloud_in)
 
     ros::Time begin = ros::Time::now();
 
-    ground_cloud1_ = cml->process_cloud(pcl_cloud, 16, 16, 6, 0.15, 0.015, 0, 0);
+    ground_cloud1_ = cml->process_cloud(pcl_cloud, 16, 16, 6, 0.2, 0.02, 0, 0);
     ground_cloud1_.header.frame_id = process_frame;
 
     // get result in camera img
@@ -141,9 +141,14 @@ void image_callback(sensor_msgs::ImageConstPtr image_msg)
     {
         Mat diff = abs(gray_newimg - color_img_row[i]);
         int diff_pix = countNonZero(diff);
+            // cv::imshow("diff", diff);
+            // // cout << file_path_color << endl;
+            // cv::waitKey(10); 
 
+        // cout << diff_pix << endl;
         if(diff_pix < 420000)
         {
+            cout << diff_pix << endl;
             cout << image_msg->header.stamp << endl;
             cv::imshow("matched_label", gray_newimg);
             cv::imshow("true_color", color_img_row[i]);
@@ -169,20 +174,35 @@ int main(int argc, char** argv)
     private_nh.getParam("stamp", label_time);
     // private_nh.getParam("label_path", label_path);
 
-    double ti = ros::Time::now().toSec();
-    cout << label_time << " " << ti << " " << ros::Time::now() <<endl;
-    cout << label_time - ti << endl;
     cml = new Cloud_Matrix_Loador();
 
     tfListener = new (tf::TransformListener);
 
     ros::Subscriber sub_cloud  = node.subscribe<sensor_msgs::PointCloud2>("/points_raw", 1, callback_cloud);
-    ros::Subscriber sub_image  = node.subscribe<sensor_msgs::Image>("/kinect2/qhd/image_color", 1, image_callback);
+    ros::Subscriber sub_image  = node.subscribe<sensor_msgs::Image>("/kinect2/qhd/image_color", 20, image_callback);
 
     // ros::Subscriber sub_velodyne_left  = node.subscribe<sensor_msgs::PointCloud2>("/ndt_map", 1, callback_cloud);
     pub_cloud      = node.advertise<sensor_msgs::PointCloud2>("/cloud_filtered", 1);
 
     string rosbag_name = "snow_grass";
+    // string rosbag_name = "hogwarts";
+    // string rosbag_name = "slope";
+
+    if (label_time == 0)
+        rosbag_name = "snow_grass";
+    else if (label_time == 1)
+        rosbag_name = "hogwarts";
+    else if (label_time == 2)
+        rosbag_name = "slope";
+    else if (label_time == 3)
+        rosbag_name = "parking";
+    else if (label_time == 4)
+        rosbag_name = "trash_summer";
+    else if (label_time == 5)
+        rosbag_name = "trash_winter";
+    else if (label_time == 6)
+        rosbag_name = "stain";
+
     for(int i = 0; i< 12; i++)
     {
         string name_label = "/home/xi/workspace/labels/";
@@ -197,7 +217,13 @@ int main(int argc, char** argv)
         ss >> str;
 
         name_label = name_label + str;
-        string color_path = name_label + "_image.png";
+
+        string color_path = name_label + "_image.";
+        if (label_time == 3 || label_time == 4 || label_time == 5 || label_time == 6)
+            color_path += "jpg";
+        else 
+            color_path += "png";
+
         string label_path = name_label + "_label.png";
         files_label.push_back(label_path);
 
