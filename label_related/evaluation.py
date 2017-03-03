@@ -162,8 +162,8 @@ def get_feature(rosbag_name, x, y, img_lengths, img_uvs, type = 'c', index_start
                 col = int(features_clean[8]*512/960)
 
             
-                # if features_clean[2] > 0.3:
-                #     features_clean[0] = 3
+                if features_clean[2] > 0.2:
+                    features_clean[0] = 3
 
                 x_new = []
 
@@ -242,28 +242,35 @@ def get_result(x_train, x_test, y_train, y_test):
         roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
     return fpr, tpr, roc_auc
 
-def draw_single_ROC(fpr_c, tpr_c, roc_auc_c, fpr_v, tpr_v, roc_auc_v, fpr_g, tpr_g, roc_auc_g, type='risky'):
-    plt.figure()
-    plt.plot(fpr_c[0], tpr_c[0],
-            label='Fusion (area = {0:0.2f})'
-                ''.format(roc_auc_c[0]),
-            color='deeppink', linestyle='-', linewidth=4)            
-    plt.plot(fpr_g[0], tpr_g[0],
-            label='Geometry (area = {0:0.2f})'
-                ''.format(roc_auc_g[0]),
-            color='cornflowerblue', linestyle='-', linewidth=4)
-    plt.plot(fpr_v[0], tpr_v[0],
-            label='Vision (area = {0:0.2f})'
-                ''.format(roc_auc_v[0]),
-            color='darkorange', linestyle='-', linewidth=4)    
+
+def draw_single_ROC(fpr_c, tpr_c, roc_auc_c, fpr_v, tpr_v, roc_auc_v, fpr_g, tpr_g, roc_auc_g, type='safe'):
+    if type == 'safe':
+        index = 0
+    if type == 'risky':
+        index = 1
+    elif type == 'osbtacle':
+        index = 2
+    plt.figure(figsize=(5, 5))
+    plt.plot(fpr_c[index], tpr_c[index],
+            label=r'Fusion ({0:0.2f}\% AUC)'.format(100 *roc_auc_c[index]),
+            color='deeppink', linestyle='-', linewidth=2)            
+    plt.plot(fpr_g[index], tpr_g[index],
+            label=r'Geometry ({0:0.2f}\% AUC)'.format(100 * roc_auc_g[index]),
+            color='cornflowerblue', linestyle='-', linewidth=2)
+    plt.plot(fpr_v[index], tpr_v[index],
+            label=r'Vision ({0:0.2f}\% AUC)'.format(100 * roc_auc_v[index]),
+            color='darkorange', linestyle='-', linewidth=2)    
     plt.plot([0, 1], [0, 1], 'k--', lw=2)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Classification result on ' + type + ' terrain')
+    plt.xlabel(r'False Positive Rate', fontsize=14)
+    plt.ylabel(r'True Positive Rate', fontsize=14)
+    # plt.title('Classification result on ' + type + ' terrain')
     plt.legend(loc="lower right")
+    plt.savefig('roc_' + type + '.pdf', bbox_inches='tight')
     plt.show()
+
+
 
 def draw_ROC(fpr_c, tpr_c, roc_auc_c, fpr_v, tpr_v, roc_auc_v, fpr_g, tpr_g, roc_auc_g):
     # flat terrain
@@ -387,13 +394,13 @@ c_2 = 2
 e_2 = 12
 
 
-x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c = get_feature(data_1, x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c, 'c', s_1, c_1)
-x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v = get_feature(data_1, x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v, 'v', s_1, c_1)
-x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g = get_feature(data_1, x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g, 'g', s_1, c_1)
-
 x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c = get_feature(data_2, x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c, 'c', s_1, c_1)
 x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v = get_feature(data_2, x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v, 'v', s_1, c_1)
 x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g = get_feature(data_2, x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g, 'g', s_1, c_1)
+
+x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c = get_feature(data_1, x_train_c, y_train_c, img_lengths_train_c, img_uvs_train_c, 'c', s_1, c_1)
+x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v = get_feature(data_1, x_train_v, y_train_v, img_lengths_train_v, img_uvs_train_v, 'v', s_1, c_1)
+x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g = get_feature(data_1, x_train_g, y_train_g, img_lengths_train_g, img_uvs_train_g, 'g', s_1, c_1)
 
 
 ## testing set
@@ -407,6 +414,14 @@ img_lengths_test_c.append(0)
 img_lengths_test_g.append(0)
 img_lengths_test_v.append(0)
 
+
+# x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_1, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c')
+# x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_1, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
+# x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_1, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g')
+
+# x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_2, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c')
+# x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_2, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
+# x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_2, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g')
 
 x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_3, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c')
 x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_3, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
@@ -424,9 +439,10 @@ x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_5, x_t
 x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_5, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
 x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_5, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g')
 
-# x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_6, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c', c_2, e_2)
-# x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_6, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v', c_2, e_2)
-# x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_6, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g', c_2, e_2)
+# x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c = get_feature(data_7, x_test_c, y_test_c, img_lengths_test_c, img_uvs_test_c, 'c')
+# x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v = get_feature(data_7, x_test_v, y_test_v, img_lengths_test_v, img_uvs_test_v, 'v')
+# x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g = get_feature(data_7, x_test_g, y_test_g, img_lengths_test_g, img_uvs_test_g, 'g')
+
 
 ################################ normolize data set ############################
 
@@ -442,6 +458,10 @@ x_test_v        = normolize_data(x_test_v, feature_norms_v)
 feature_norms_g = normolize_dataset(x_train_g)
 x_train_g       = normolize_data(x_train_g, feature_norms_g)
 x_test_g        = normolize_data(x_test_g, feature_norms_g)
+
+print feature_norms_c
+print feature_norms_v
+print feature_norms_g
 
 
 from sklearn.preprocessing import label_binarize
@@ -462,20 +482,20 @@ draw_ROC(fpr_c, tpr_c, roc_auc_c, fpr_v, tpr_v, roc_auc_v, fpr_g, tpr_g, roc_auc
 #             ''.format(roc_auc["micro"]),
 #         color='deeppink', linestyle='-', linewidth=4)
 
-x_train = x_train_v
-y_train = y_train_v
-x_test = x_test_v
-y_test = y_test_v
+# x_train = x_train_c
+# y_train = y_train_c
+# x_test = x_test_c
+# y_test = y_test_c
 
-for name, clf in zip(names, classifiers):
-    print name
-    # clf.fit(x_train, y_train)
-    # # scores = clf.score(x_test, y_test)
-    # predict = clf.predict(x_test)
-    # print metrics.confusion_matrix(y_test, predict)
-    # print metrics.classification_report(y_test, predict)
+# for name, clf in zip(names, classifiers):
+#     print name
+#     clf.fit(x_train, y_train)
+#     # scores = clf.score(x_test, y_test)
+#     predict = clf.predict(x_test)
+#     print metrics.confusion_matrix(y_test, predict)
+#     print metrics.classification_report(y_test, predict)
 
-    # draw_result_img(x_test_c, y_test_c, x_train_c, y_train_c, img_lengths_test_c, img_uvs_test_c, 'c')
-    # draw_result_img(x_test_v, y_test_v, x_train_v, y_train_v, img_lengths_test_v, img_uvs_test_v, 'v')
-    # draw_result_img(x_test_g, y_test_g, x_train_g, y_train_g, img_lengths_test_g, img_uvs_test_g, 'g')
+#     draw_result_img(x_test_c, y_test_c, x_train_c, y_train_c, img_lengths_test_c, img_uvs_test_c, 'c')
+#     draw_result_img(x_test_v, y_test_v, x_train_v, y_train_v, img_lengths_test_v, img_uvs_test_v, 'v')
+#     draw_result_img(x_test_g, y_test_g, x_train_g, y_train_g, img_lengths_test_g, img_uvs_test_g, 'g')
 
